@@ -7,7 +7,7 @@ Created on Tue Jan 26 13:09:47 2016
 
 from sklearn import cross_validation
 from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
+#from sklearn.tree import DecisionTreeClassifier
 from myUDT import UDT
 from myDT_AVG import DT_AVG
 

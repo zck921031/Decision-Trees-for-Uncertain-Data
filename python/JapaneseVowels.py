@@ -5,7 +5,7 @@ Created on Tue Jan 26 13:09:47 2016
 @author: zck
 """
 
-from sklearn import cross_validation
+#from sklearn import cross_validation
 from sklearn import tree
 import numpy as np
 from myDT_AVG import DT_AVG
@@ -88,10 +88,10 @@ def run_AVG(_xTr, yTr, _xTe, yTe):
 def run_AVG_DT_paper(_xTr, yTr, _xTe, yTe):
     xTr = change_to_avg(_xTr)
     xTe = change_to_avg(_xTe)
-    clf = DT_C45()
+    clf = DT_AVG()
     clf.fit(xTr, yTr)
     print( 'JapaneseVowels AVG acc is {0}'.format( clf.score(xTe, yTe) ) )
- 
+
 if __name__ == '__main__':
     (xTr, yTr, xTe, yTe) = load_JapaneseVowels('../datasets/JapaneseVowels-mld/')
 #    xTr = xTr[:27]
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     
     pdfTr = change_to_pdf(xTr)
     pdfTe = change_to_pdf(xTe)
-    clf = UDT(max_depth=10)
+    clf = UDT(max_depth=10, debug=True)
     clf.fit(pdfTr, yTr)
     pred = clf.predict(pdfTe);
     print( 'JapaneseVowels UDT acc is {0}'.format( clf.score(pdfTe, yTe) ) )
