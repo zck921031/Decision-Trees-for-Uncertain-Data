@@ -32,7 +32,10 @@ if __name__ == '__main__':
     print( "iris UDT acc is {0}".format(acc) )
 #xTr,xTe = cross_validation.train_test_split(iris.data, test_size = 0.2, random_state=100)
 #yTr,yTe = cross_validation.train_test_split(iris.target, test_size = 0.2, random_state=100)
-#scores = cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5)
+    
+    clf = DT_AVG()
+    print( "iris DT 10-forld acc is {0}".format(
+        (cross_validation.cross_val_score(clf, iris.data, iris.target, cv=10)).mean() ) )
 #
 #clf = tree.DecisionTreeClassifier()
 #clf = clf.fit(xTr, yTr)

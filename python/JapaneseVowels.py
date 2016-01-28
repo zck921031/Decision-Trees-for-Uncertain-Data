@@ -104,7 +104,7 @@ if __name__ == '__main__':
     pdfTe = change_to_pdf(xTe)
     clf = UDT(max_depth=10, debug=True)
     clf.fit(pdfTr, yTr)
-    pred = clf.predict(pdfTe);
+    pred = clf.predict(pdfTe)
     print( 'JapaneseVowels UDT acc is {0}'.format( clf.score(pdfTe, yTe) ) )
     
 #clf = tree.DecisionTreeClassifier()
