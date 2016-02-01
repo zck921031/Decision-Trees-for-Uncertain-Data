@@ -57,9 +57,7 @@ class UDT(DecisionTreeClassifier):
             
             
     def dict_norm(self, d):
-        for key in d:
-            d[key] = max(d[key], 0)
-        c = max(float(sum(d.values())), 1e-50)
+        c = max(float(sum( d.values() )), 1e-50)
         return {k:v/c for (k,v) in d.items()}
 
     def split_label_prob(self, pdf, y, label_prob, a, v):
@@ -149,66 +147,6 @@ class UDT(DecisionTreeClassifier):
             if v>0:
                 cnt += 1
         return True if cnt<=1 else False
-
-    def choose_best_split_point(self, pdf, y, y_prob):
-        N = len(pdf)
-        M = len(pdf[0])        
-        max_gain = -1e50
-        best_attr = None
-        best_value = None
-        
-        """
-        O(NMKC)
-        """
-        for attr in xrange(M):
-            #print attr
-            p_left_sum = 0.0
-            p_right_sum = 0.0
-            label_left_sum = {}
-            label_right_sum = {}
-            y_prob_scalar = []
-            for i in xrange(N):
-                label_left_sum[y[i]] = label_left_sum.get(y[i],0) + y_prob[i]
-                p_left_sum += y_prob[i]
-                y_prob_scalar.append( sum(pdf[i][attr].values()) )
-            p_sum = max(p_left_sum, 1e-50)
-            #print( y )
-            #print( p_left_sum,p_right_sum )
-            #print( (label_left_sum,label_right_sum) )
-            # triple: (tri_point, tri_y, tri_p)
-            events = {}
-            for i in xrange(N):
-                tri_y = i
-                for (point,prob) in pdf[i][attr].items():
-                    if not events.has_key(point):
-                        events[point] = []
-                    events.get(point).append( (tri_y,prob) )
-            for (point,value) in sorted( events.items() ):
-                for (tri_y, tri_p) in value:
-                    tri_label = y[tri_y]
-                    step = y_prob[tri_y]*tri_p/max(y_prob_scalar[tri_y],1e-50)
-                    p_left_sum -= step
-                    p_right_sum += step
-                    p_left_sum = max(0, p_left_sum)
-                    p_right_sum = max(0, p_right_sum)
-                    label_left_sum[tri_label] = label_left_sum.get(tri_label,0)-step
-                    label_right_sum[tri_label] = label_right_sum.get(tri_label,0)+step
-                    #print(point, tri_label, tri_p )
-                temp_gain = 0
-                for p_i in self.dict_norm(label_left_sum).values():
-                    temp_gain += p_i*math.log(max(p_i,1e-50), 2.0) * p_left_sum/p_sum
-                for p_i in self.dict_norm(label_right_sum).values():
-                    temp_gain += p_i*math.log(max(p_i,1e-50), 2.0) * p_right_sum/p_sum
-                if max_gain < temp_gain:
-                    max_gain = temp_gain
-                    best_attr = attr
-                    best_value = point
-
-                #print(point, temp_gain, p_left_sum, p_right_sum, p_sum)
-#        print("choose attr {0} value {1} to split real info is {2}.".format(
-#            best_attr,best_value, self.info_gain(pdf,y,y_prob, best_attr,best_value),
-#            ))
-        return (best_attr, best_value, max_gain)
         
     def build_tree(self, pdf, y, label_prob, threshold=0.0001, u=None, depth=0):
         #print('! a new node achieve')    
@@ -222,21 +160,21 @@ class UDT(DecisionTreeClassifier):
             u.label = self.dict_norm(self.sum_y_label_prob(y,label_prob))
             return u
             
-#        max_gain = -1e50
-#        best_attr = None
-#        best_value = None
-#        for attr in xrange(M):
-#            #print attr
-#            for value in self.get_divide_points(pdf, attr):
-#                #print( (attr, value) )
-#                temp_gain = self.info_gain(pdf, y, label_prob, attr, value)
-#                #print(attr, value, temp_gain)
-#                if temp_gain > max_gain:
-#                    max_gain = temp_gain
-#                    best_attr = attr
-#                    best_value = value
-                    
-        (best_attr, best_value, max_gain) = self.choose_best_split_point(pdf, y, label_prob)
+        max_gain = -1e50
+        best_attr = None
+        best_value = None
+        
+        
+        for attr in xrange(M):
+            #print attr
+            for value in self.get_divide_points(pdf, attr):
+                #print( (attr, value) )
+                temp_gain = self.info_gain(pdf, y, label_prob, attr, value)
+                #print(attr, value, temp_gain)
+                if temp_gain > max_gain:
+                    max_gain = temp_gain
+                    best_attr = attr
+                    best_value = value
         
         #print(best_attr, best_value) # yes
         #return 
@@ -261,8 +199,8 @@ class UDT(DecisionTreeClassifier):
         #print(self.dict_norm(self.sum_y_label_prob(y,label_prob_right)))
         
         if self.debug:
-            print('choose attr {0} to split value is {1} my size is {2} info is {3}'.format(
-                best_attr, best_value, len(pdf), max_gain) )
+            print('choose attr {0} to split value is {1} my size is {2}'.format(
+                best_attr, best_value, len(pdf)) )
         
         # Recursion left child, 
         pdf_ch = [ [pdf[i][j] for j in xrange(M)] for i in xrange(N) ]
