@@ -10,7 +10,7 @@ from sklearn import svm, tree
 import sklearn.datasets
 import pandas
 import numpy as np
-import time
+import time, sys
 from threading import Thread
 from myUDT import UDT
 
@@ -171,17 +171,23 @@ if __name__ == '__main__':
             'Yeast':load_Yeast}
     results = []
     threads = []
+    if len(sys.argv)==2:
+        names = [sys.argv[1]]
     for name in names:
         if not load_datas.has_key(name):
             raise( name + ' loading function doesn\'t implement!' )
         (x,y) = load_datas[name]()
         #res = run_experiment(name, x, y, svm.SVC(kernel='linear',max_iter=5000) )
-        res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
+        res = run_experiment(name, x, y, UDT() )
+        #res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
         results.append(res)
         #t = experiment(name, x, y, tree.DecisionTreeClassifier() )
     results = np.asarray(results)
     results = pandas.DataFrame(data=results, index=names,
                          columns=[1,2,3,4,5,6,7,8,9,10,'mean','std','time(second)'])
     print(results)
-    results.to_csv('log/result.log')
+    if len(sys.argv)==2:
+        results.to_csv('log/{0}.csv'.format(sys.argv[1]) )
+    else:
+        results.to_csv('log/result.log')
     
