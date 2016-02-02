@@ -329,7 +329,7 @@ class UDT(DecisionTreeClassifier):
             pdf = self.gauss_pdf(pdf)
             
         if None == self.max_depth:
-            self.max_depth = 10000000
+            self.max_depth = math.log( len(pdf), 2 ) + 2
         y = list(_y)
         label_prob = [ 1 for k in y ] # 实例剩余概率
         #print(label_prob) # yes
