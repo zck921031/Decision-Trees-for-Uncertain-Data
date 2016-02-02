@@ -11,6 +11,8 @@ import sklearn.datasets
 import pandas
 import numpy as np
 import time
+from threading import Thread
+from myUDT import UDT
 
 def mapy(y_t):
     h = {}
@@ -112,7 +114,39 @@ def run_experiment(experiment_name, x, y, clf):
     print("used time {0} seconds".format( endtime-starttime ) )
     print("----------------------------------------------")
     return scores
-    
+
+class experiment(Thread):
+    def __init__(self, experiment_name, x, y, clf):
+        self.experiment_name = experiment_name
+        self.x = x
+        self.y = y
+        self.clf = clf
+        super(experiment, self).__init__()
+    def run(self):
+        experiment_name = self.experiment_name
+        x = self.x
+        y = self.y
+        clf = self.clf
+        print( "{0}: {1}, {2}, {3}".format(experiment_name,
+                  x.shape[0],x.shape[1],len(set(y))) )
+    #    print( x[0] )    
+        starttime = time.clock()
+        
+        scores =cross_validation.cross_val_score(clf, x, y, cv=10)
+        
+        endtime = time.clock()
+        print scores
+        print ( 'mean is {0}, std is {1}'.format(scores.mean(),scores.std() ))
+        print("used time {0} seconds".format( endtime-starttime ) )
+        print("----------------------------------------------")
+        with open("log/{0}.log".format(experiment_name), "w") as f:
+            f.write( str(scores)+"\n" )
+            f.write( 'mean is {0}, std is {1}\n'.format(scores.mean(),scores.std() ))
+            f.write("used time {0} seconds\n".format( endtime-starttime ))
+        
+        self.result = np.concatenate(
+            (scores,[scores.mean(),scores.std(),float(endtime-starttime)]))
+        
 if __name__ == '__main__':
     names = ['Banknote', 'Bench', 'Glass', 'Heart', 'Iris',
              'Leaf', 'Seeds', 'Wine', 'Winequality', 'Yeast']
@@ -126,14 +160,25 @@ if __name__ == '__main__':
             'Wine':load_Wine, 
             'Winequality':load_Winequality,
             'Yeast':load_Yeast}
-    scores = []
+    results = []
+    threads = []
     for name in names:
         if not load_datas.has_key(name):
             raise( name + ' loading function doesn\'t implement!' )
         (x,y) = load_datas[name]()
         #res = run_experiment(name, x, y, svm.SVC(kernel='linear',max_iter=5000) )
-        res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
-        scores.append(res)
-    scores = np.asarray(scores)
-
+        #res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
+        #scores.append(res)
+        #t = experiment(name, x, y, tree.DecisionTreeClassifier() )
+        t = experiment(name, x, y, UDT() )
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+        results.append(t.result)
+    results = np.asarray(results)
+    results = pandas.DataFrame(data=results, index=names,
+                         columns=[1,2,3,4,5,6,7,8,9,10,'mean','std','time(second)'])
+    print(results)
+    results.to_csv('log/result.log')
     
