@@ -49,7 +49,7 @@ def load_Glass():
     return (x, y)
 
 def load_Heart():
-    t = pandas.read_csv("../datasets/Heart/Heart.dat",
+    t = pandas.read_csv("../datasets/Heart/heart.dat",
                         header=None,
                         delimiter=' ', skipinitialspace=True).as_matrix()
     x = t[:, 0:13]
@@ -92,7 +92,7 @@ def load_Winequality():
     return (x,y)
     
 def load_Yeast():
-    t = pandas.read_csv("../datasets/yeast/yeast.data",
+    t = pandas.read_csv("../datasets/Yeast/yeast.data",
                         header=None,
                         delimiter=' ', skipinitialspace=True).as_matrix()
     x = t[:,1:9]
@@ -101,6 +101,7 @@ def load_Yeast():
     
 
 def run_experiment(experiment_name, x, y, clf):
+
     print( "{0}: {1}, {2}, {3}".format(experiment_name,
               x.shape[0],x.shape[1],len(set(y))) )
 #    print( x[0] )    
@@ -113,7 +114,14 @@ def run_experiment(experiment_name, x, y, clf):
     print ( 'mean is {0}, std is {1}'.format(scores.mean(),scores.std() ))
     print("used time {0} seconds".format( endtime-starttime ) )
     print("----------------------------------------------")
-    return scores
+    with open("log/{0}.log".format(experiment_name), "w") as f:
+        f.write( str(scores)+"\n" )
+        f.write( 'mean is {0}, std is {1}\n'.format(scores.mean(),scores.std() ))
+        f.write("used time {0} seconds\n".format( endtime-starttime ))
+    
+    result = np.concatenate(
+        (scores,[scores.mean(),scores.std(),float(endtime-starttime)]))
+    return result
 
 class experiment(Thread):
     def __init__(self, experiment_name, x, y, clf):
@@ -150,7 +158,8 @@ class experiment(Thread):
 if __name__ == '__main__':
     names = ['Banknote', 'Bench', 'Glass', 'Heart', 'Iris',
              'Leaf', 'Seeds', 'Wine', 'Winequality', 'Yeast']
-    load_datas = {'Banknote':load_Banknote,
+    load_datas = {
+            'Banknote':load_Banknote,
             'Bench':load_Bench,
             'Glass':load_Glass,
             'Heart':load_Heart,
@@ -167,15 +176,9 @@ if __name__ == '__main__':
             raise( name + ' loading function doesn\'t implement!' )
         (x,y) = load_datas[name]()
         #res = run_experiment(name, x, y, svm.SVC(kernel='linear',max_iter=5000) )
-        #res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
-        #scores.append(res)
+        res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
+        results.append(res)
         #t = experiment(name, x, y, tree.DecisionTreeClassifier() )
-        t = experiment(name, x, y, UDT() )
-        threads.append(t)
-        t.start()
-    for t in threads:
-        t.join()
-        results.append(t.result)
     results = np.asarray(results)
     results = pandas.DataFrame(data=results, index=names,
                          columns=[1,2,3,4,5,6,7,8,9,10,'mean','std','time(second)'])
