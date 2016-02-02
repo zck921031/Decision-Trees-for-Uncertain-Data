@@ -6,7 +6,7 @@ Created on Tue Jan 26 13:09:47 2016
 """
 
 from sklearn.tree import DecisionTreeClassifier
-import math, operator
+import math, operator, numpy, random
 #import numpy as np
 
 class Node:
@@ -306,10 +306,28 @@ class UDT(DecisionTreeClassifier):
         #print(u.chr)
         #print(label_prob)      
         return u
-        
+    
+    def gauss_pdf(self, x):
+        """
+        change 2-D array to pdf
+        """
+        (N,M) = x.shape
+        bb = 50
+        w = 0.10
+        pdf = [ [ {} for j in xrange(M)] for i in xrange(N) ]        
+        for j in xrange(M):
+            std = w*(max(x[:,j]) - min(x[:,j]))/4.0
+            for i in xrange(N):
+                for k in xrange(bb):
+                    point = random.gauss(x[i][j], std)
+                    pdf[i][j][point] = pdf[i][j].get(point,0.0) + 1.0/bb
+        return pdf
                         
     def fit(self, pdf, _y, sample_weight=None, check_input=True):    
         #print(pdf)
+        if numpy.ndarray==type(pdf):
+            pdf = self.gauss_pdf(pdf)
+            
         if None == self.max_depth:
             self.max_depth = 10000000
         y = list(_y)
@@ -365,6 +383,8 @@ class UDT(DecisionTreeClassifier):
             return label
                 
     def predict(self, pdf, check_input=True):
+        if numpy.ndarray==type(pdf):
+            pdf = self.gauss_pdf(pdf)
         all_proba = []
         for k in range( len(pdf) ):
             label_prob = self.classify(pdf[k], self.tree)

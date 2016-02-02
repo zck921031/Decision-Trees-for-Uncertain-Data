@@ -36,7 +36,11 @@ if __name__ == '__main__':
     clf = DT_AVG()
     print( "iris DT 10-forld acc is {0}".format(
         (cross_validation.cross_val_score(clf, iris.data, iris.target, cv=10)).mean() ) )
-#
+
+    clf = UDT()
+    print( "iris UDT 10-forld acc is {0}".format(
+        (cross_validation.cross_val_score(clf, iris.data, iris.target, cv=10)).mean() ) )
+
 #clf = tree.DecisionTreeClassifier()
 #clf = clf.fit(xTr, yTr)
 #answer = clf.score(xTe, yTe)
