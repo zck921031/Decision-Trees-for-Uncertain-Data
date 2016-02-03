@@ -100,14 +100,27 @@ def load_Yeast():
     return (x,y)
     
 
-def run_experiment(experiment_name, x, y, clf):
+def run_experiment(experiment_name, x, y, clf, fold_idx = None):
 
     print( "{0}: {1}, {2}, {3}".format(experiment_name,
               x.shape[0],x.shape[1],len(set(y))) )
-#    print( x[0] )    
+#    print( x[0] )
+    
     starttime = time.clock()
     
-    scores =cross_validation.cross_val_score(clf, x, y, cv=10)
+    #scores =cross_validation.cross_val_score(clf, x, y, cv=10)
+    skf = cross_validation.StratifiedKFold(y, n_folds=10, random_state=1992)
+    scores = []
+    cnt = -1
+    for train_index, test_index in skf:
+        cnt = cnt+1
+        if ( None!=fold_idx and cnt!=fold_idx ):
+            continue
+        xTr, xTe = x[train_index], x[test_index]
+        yTr, yTe = y[train_index], y[test_index]
+        clf.fit(xTr, yTr)
+        scores.append( clf.score(xTe, yTe) )  
+    scores = np.asarray(scores)
     
     endtime = time.clock()
     print scores
@@ -123,37 +136,6 @@ def run_experiment(experiment_name, x, y, clf):
         (scores,[scores.mean(),scores.std(),float(endtime-starttime)]))
     return result
 
-class experiment(Thread):
-    def __init__(self, experiment_name, x, y, clf):
-        self.experiment_name = experiment_name
-        self.x = x
-        self.y = y
-        self.clf = clf
-        super(experiment, self).__init__()
-    def run(self):
-        experiment_name = self.experiment_name
-        x = self.x
-        y = self.y
-        clf = self.clf
-        print( "{0}: {1}, {2}, {3}".format(experiment_name,
-                  x.shape[0],x.shape[1],len(set(y))) )
-    #    print( x[0] )    
-        starttime = time.clock()
-        
-        scores =cross_validation.cross_val_score(clf, x, y, cv=10)
-        
-        endtime = time.clock()
-        print scores
-        print ( 'mean is {0}, std is {1}'.format(scores.mean(),scores.std() ))
-        print("used time {0} seconds".format( endtime-starttime ) )
-        print("----------------------------------------------")
-        with open("log/{0}.log".format(experiment_name), "w") as f:
-            f.write( str(scores)+"\n" )
-            f.write( 'mean is {0}, std is {1}\n'.format(scores.mean(),scores.std() ))
-            f.write("used time {0} seconds\n".format( endtime-starttime ))
-        
-        self.result = np.concatenate(
-            (scores,[scores.mean(),scores.std(),float(endtime-starttime)]))
         
 if __name__ == '__main__':
     names = ['Banknote', 'Bench', 'Glass', 'Heart', 'Iris',
@@ -171,23 +153,33 @@ if __name__ == '__main__':
             'Yeast':load_Yeast}
     results = []
     threads = []
-    if len(sys.argv)==2:
+    if len(sys.argv)>=2:
         names = [sys.argv[1]]
     for name in names:
         if not load_datas.has_key(name):
             raise( name + ' loading function doesn\'t implement!' )
         (x,y) = load_datas[name]()
+        fold_idx = int(sys.argv[2]) if len(sys.argv)>=3 else None
         #res = run_experiment(name, x, y, svm.SVC(kernel='linear',max_iter=5000) )
-        res = run_experiment(name, x, y, UDT() )
-        #res = run_experiment(name, x, y, tree.DecisionTreeClassifier() )
+        res = run_experiment(name, x, y, UDT(), fold_idx )
+        #res = run_experiment(name, x, y, tree.DecisionTreeClassifier(), fold_idx )
         results.append(res)
+        print res
         #t = experiment(name, x, y, tree.DecisionTreeClassifier() )
     results = np.asarray(results)
-    results = pandas.DataFrame(data=results, index=names,
-                         columns=[1,2,3,4,5,6,7,8,9,10,'mean','std','time(second)'])
-    print(results)
+    if len(sys.argv)<=2:
+        results = pandas.DataFrame(data=results, index=names,
+                             columns=[1,2,3,4,5,6,7,8,9,10,'mean','std','time(second)'])
+        print(results)
+    else:
+        results = pandas.DataFrame(data=results, index=names,
+                             columns=['result','mean','std','time(second)'])
+        print(results)
+            
     if len(sys.argv)==2:
         results.to_csv('log/{0}.csv'.format(sys.argv[1]) )
-    else:
-        results.to_csv('log/result.log')
+    elif len(sys.argv)==1:
+        results.to_csv('log/result.csv')
+    elif len(sys.argv)==3:
+        results.to_csv('log/{0}_{1}.csv'.format(sys.argv[1], sys.argv[2]))
     
