@@ -164,7 +164,7 @@ if __name__ == '__main__':
         res = run_experiment(name, x, y, UDT(), fold_idx )
         #res = run_experiment(name, x, y, tree.DecisionTreeClassifier(), fold_idx )
         results.append(res)
-        print res
+        #print res
         #t = experiment(name, x, y, tree.DecisionTreeClassifier() )
     results = np.asarray(results)
     if len(sys.argv)<=2:
