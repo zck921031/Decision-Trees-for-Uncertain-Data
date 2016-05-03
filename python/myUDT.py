@@ -40,9 +40,13 @@ class UDT(DecisionTreeClassifier):
                  random_state=None,
                  max_leaf_nodes=None,
                  class_weight=None,
-                 debug=False):
+                 debug=False,
+                 bb=50,
+                 w=0.1):
         self.tree = None
         self.debug = debug
+        self.bb = bb
+        self.w = w
         super(UDT, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -312,8 +316,8 @@ class UDT(DecisionTreeClassifier):
         change 2-D array to pdf
         """
         (N,M) = x.shape
-        bb = 50
-        w = 0.10
+        bb = self.bb
+        w = self.w
         pdf = [ [ {} for j in xrange(M)] for i in xrange(N) ]        
         for j in xrange(M):
             std = w*(max(x[:,j]) - min(x[:,j]))/4.0
